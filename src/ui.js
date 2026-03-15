@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { downloadPose, importPose } from './poseSerializer.js';
+import { downloadPose, downloadPosePython, importPose } from './poseSerializer.js';
 
 export function createUI(state, loadModelFn) {
   const boneTreeEl = document.getElementById('bone-tree');
@@ -347,7 +347,15 @@ export function createUI(state, loadModelFn) {
 
     actionsEl.appendChild(resetBtn);
     actionsEl.appendChild(exportBtn);
+    const pythonBtn = document.createElement('button');
+    pythonBtn.textContent = 'Export Python Dict';
+    pythonBtn.addEventListener('click', () => {
+      if (state.bones.length === 0) return;
+      downloadPosePython(state.bones);
+    });
+
     actionsEl.appendChild(importBtn);
+    actionsEl.appendChild(pythonBtn);
   }
 
   // --- State Listeners ---

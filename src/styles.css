@@ -70,6 +70,24 @@ body {
   background: #c73e54;
 }
 
+#view-options {
+  padding: 10px 16px;
+  border-bottom: 1px solid #0f3460;
+}
+
+#view-options label {
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+#view-options input[type="checkbox"] {
+  accent-color: #e94560;
+}
+
 #bone-tree {
   flex: 1;
   overflow-y: auto;

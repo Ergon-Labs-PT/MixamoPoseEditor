@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 export function exportPose(bones) {
   const poseData = {
     format: 'mixamo-pose-editor',
@@ -33,6 +35,46 @@ export function importPose(bones, poseData) {
       }
     }
   }
+}
+
+function stripPrefix(name) {
+  return name.replace(/^mixamorig\d*:?/i, '');
+}
+
+export function exportPosePython(bones) {
+  const lines = ['POSE = {'];
+  const seen = new Set();
+
+  for (const bone of bones) {
+    const clean = stripPrefix(bone.name);
+    if (seen.has(clean)) continue;
+    seen.add(clean);
+
+    const rx = Math.round(THREE.MathUtils.radToDeg(bone.rotation.x));
+    const ry = Math.round(THREE.MathUtils.radToDeg(bone.rotation.y));
+    const rz = Math.round(THREE.MathUtils.radToDeg(bone.rotation.z));
+
+    // Skip bones with no rotation
+    if (rx === 0 && ry === 0 && rz === 0) continue;
+
+    const key = `    "${clean}":`;
+    const pad = ' '.repeat(Math.max(1, 20 - clean.length));
+    lines.push(`${key}${pad}(${rx}, ${ry}, ${rz}),`);
+  }
+
+  lines.push('}');
+  return lines.join('\n');
+}
+
+export function downloadPosePython(bones) {
+  const content = exportPosePython(bones);
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pose-${Date.now()}.py`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export function downloadPose(bones) {

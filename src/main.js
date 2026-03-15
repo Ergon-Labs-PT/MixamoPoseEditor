@@ -59,6 +59,23 @@ async function init() {
     }
   });
 
+  // Toggle helpers checkbox
+  const toggleHelpers = document.getElementById('toggle-helpers');
+  toggleHelpers.addEventListener('change', () => {
+    const visible = toggleHelpers.checked;
+    jointMarkers.markerGroup.visible = visible;
+    if (state.skeletonHelper) {
+      state.skeletonHelper.visible = visible;
+    }
+  });
+
+  // Keep skeleton helper visibility in sync when a new model loads
+  state.on('modelLoaded', () => {
+    if (state.skeletonHelper) {
+      state.skeletonHelper.visible = toggleHelpers.checked;
+    }
+  });
+
   // Render loop
   renderer.setAnimationLoop(() => {
     jointMarkers.updateMarkerPositions();
