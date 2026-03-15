@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mixamo Pose Editor</title>
+  <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+  <div id="app">
+    <div id="viewport"></div>
+    <div id="side-panel">
+      <div id="panel-header">
+        <h1>Pose Editor</h1>
+        <button id="load-fbx-btn">Load FBX</button>
+        <input type="file" id="fbx-file-input" accept=".fbx" hidden>
+      </div>
+      <div id="bone-tree"></div>
+      <div id="bone-controls"></div>
+      <div id="actions"></div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
