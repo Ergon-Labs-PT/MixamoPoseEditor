@@ -38,7 +38,12 @@ export function notifyBoneRotated(bone) {
 
 export function resetPose() {
   for (const bone of bones) {
-    bone.rotation.set(0, 0, 0);
+    const rest = bone.userData.restRotation;
+    if (rest) {
+      bone.rotation.copy(rest);
+    } else {
+      bone.rotation.set(0, 0, 0);
+    }
   }
   emit('poseReset');
   if (selectedBone) {

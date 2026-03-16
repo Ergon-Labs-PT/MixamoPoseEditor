@@ -36,10 +36,15 @@ export function loadModel(source, scene, state) {
         });
       }
 
-      // Collect ALL bones from the hierarchy (skeleton.bones may be incomplete)
+      // Collect ALL bones from the hierarchy, deduplicating by name
+      // (FBX files may contain multiple bone objects with the same name)
       const bones = [];
+      const seenNames = new Set();
       object.traverse((child) => {
-        if (child.isBone) {
+        if (child.isBone && !seenNames.has(child.name)) {
+          seenNames.add(child.name);
+          // Store the original rest-pose rotation so we can reset and export deltas
+          child.userData.restRotation = child.rotation.clone();
           bones.push(child);
         }
       });

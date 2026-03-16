@@ -9,8 +9,12 @@ export function exportPose(bones) {
   };
 
   for (const bone of bones) {
+    const rest = bone.userData.restRotation;
+    const dx = bone.rotation.x - (rest ? rest.x : 0);
+    const dy = bone.rotation.y - (rest ? rest.y : 0);
+    const dz = bone.rotation.z - (rest ? rest.z : 0);
     poseData.bones[bone.name] = {
-      rotation: [bone.rotation.x, bone.rotation.y, bone.rotation.z],
+      rotation: [dx, dy, dz],
       order: bone.rotation.order,
     };
   }
@@ -29,7 +33,12 @@ export function importPose(bones, poseData) {
   for (const [name, data] of Object.entries(poseData.bones)) {
     const bone = boneMap.get(name);
     if (bone && data.rotation) {
-      bone.rotation.set(data.rotation[0], data.rotation[1], data.rotation[2]);
+      const rest = bone.userData.restRotation;
+      bone.rotation.set(
+        data.rotation[0] + (rest ? rest.x : 0),
+        data.rotation[1] + (rest ? rest.y : 0),
+        data.rotation[2] + (rest ? rest.z : 0),
+      );
       if (data.order) {
         bone.rotation.order = data.order;
       }
@@ -50,9 +59,10 @@ export function exportPosePython(bones) {
     if (seen.has(clean)) continue;
     seen.add(clean);
 
-    const rx = Math.round(THREE.MathUtils.radToDeg(bone.rotation.x));
-    const ry = Math.round(THREE.MathUtils.radToDeg(bone.rotation.y));
-    const rz = Math.round(THREE.MathUtils.radToDeg(bone.rotation.z));
+    const rest = bone.userData.restRotation;
+    const rx = Math.round(THREE.MathUtils.radToDeg(bone.rotation.x - (rest ? rest.x : 0)));
+    const ry = Math.round(THREE.MathUtils.radToDeg(bone.rotation.y - (rest ? rest.y : 0)));
+    const rz = Math.round(THREE.MathUtils.radToDeg(bone.rotation.z - (rest ? rest.z : 0)));
 
     // Skip bones with no rotation
     if (rx === 0 && ry === 0 && rz === 0) continue;

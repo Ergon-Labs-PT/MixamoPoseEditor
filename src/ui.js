@@ -264,7 +264,9 @@ export function createUI(state, loadModelFn) {
       const valueSpan = document.createElement('span');
       valueSpan.className = 'value';
 
-      const currentDeg = THREE.MathUtils.radToDeg(state.selectedBone.rotation[axis]);
+      const rest = state.selectedBone.userData.restRotation;
+      const restRad = rest ? rest[axis] : 0;
+      const currentDeg = THREE.MathUtils.radToDeg(state.selectedBone.rotation[axis] - restRad);
       valueSpan.textContent = `${currentDeg.toFixed(1)}°`;
 
       labelEl.appendChild(axisSpan);
@@ -279,8 +281,8 @@ export function createUI(state, loadModelFn) {
       slider.dataset.axis = axis;
 
       slider.addEventListener('input', () => {
-        const rad = THREE.MathUtils.degToRad(parseFloat(slider.value));
-        state.selectedBone.rotation[axis] = rad;
+        const deltaRad = THREE.MathUtils.degToRad(parseFloat(slider.value));
+        state.selectedBone.rotation[axis] = restRad + deltaRad;
         valueSpan.textContent = `${parseFloat(slider.value).toFixed(1)}°`;
         state.notifyBoneRotated(state.selectedBone);
       });
@@ -293,10 +295,12 @@ export function createUI(state, loadModelFn) {
 
   function updateSliderValues() {
     if (!state.selectedBone) return;
+    const rest = state.selectedBone.userData.restRotation;
     const sliders = boneControlsEl.querySelectorAll('input[type="range"]');
     sliders.forEach(slider => {
       const axis = slider.dataset.axis;
-      const deg = THREE.MathUtils.radToDeg(state.selectedBone.rotation[axis]);
+      const restRad = rest ? rest[axis] : 0;
+      const deg = THREE.MathUtils.radToDeg(state.selectedBone.rotation[axis] - restRad);
       slider.value = deg;
       const valueSpan = slider.parentElement.querySelector('.value');
       if (valueSpan) valueSpan.textContent = `${deg.toFixed(1)}°`;
