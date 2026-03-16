@@ -287,8 +287,24 @@ export function createUI(state, loadModelFn) {
         state.notifyBoneRotated(state.selectedBone);
       });
 
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'slider-reset';
+      resetBtn.textContent = '\u21BA';
+      resetBtn.title = `Reset ${label} to 0`;
+      resetBtn.addEventListener('click', () => {
+        state.selectedBone.rotation[axis] = restRad;
+        slider.value = 0;
+        valueSpan.textContent = '0.0°';
+        state.notifyBoneRotated(state.selectedBone);
+      });
+
+      const sliderRow = document.createElement('div');
+      sliderRow.className = 'slider-row';
+      sliderRow.appendChild(slider);
+      sliderRow.appendChild(resetBtn);
+
       group.appendChild(labelEl);
-      group.appendChild(slider);
+      group.appendChild(sliderRow);
       boneControlsEl.appendChild(group);
     }
   }
@@ -302,7 +318,8 @@ export function createUI(state, loadModelFn) {
       const restRad = rest ? rest[axis] : 0;
       const deg = THREE.MathUtils.radToDeg(state.selectedBone.rotation[axis] - restRad);
       slider.value = deg;
-      const valueSpan = slider.parentElement.querySelector('.value');
+      const group = slider.closest('.slider-group');
+      const valueSpan = group ? group.querySelector('.value') : null;
       if (valueSpan) valueSpan.textContent = `${deg.toFixed(1)}°`;
     });
   }
