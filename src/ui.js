@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { downloadPose, downloadPosePython, importPose } from './poseSerializer.js';
+import { exportModelGLB } from './modelLoader.js';
 
 export function createUI(state, loadModelFn) {
   const boneTreeEl = document.getElementById('bone-tree');
@@ -13,9 +14,10 @@ export function createUI(state, loadModelFn) {
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const ext = file.name.toLowerCase().split('.').pop();
     const reader = new FileReader();
     reader.onload = (evt) => {
-      loadModelFn(evt.target.result);
+      loadModelFn(evt.target.result, ext);
     };
     reader.readAsArrayBuffer(file);
     fileInput.value = '';
@@ -375,8 +377,16 @@ export function createUI(state, loadModelFn) {
       downloadPosePython(state.bones);
     });
 
+    const exportGLBBtn = document.createElement('button');
+    exportGLBBtn.textContent = 'Export Model (GLB)';
+    exportGLBBtn.addEventListener('click', () => {
+      if (!state.model) return;
+      exportModelGLB(state.model);
+    });
+
     actionsEl.appendChild(importBtn);
     actionsEl.appendChild(pythonBtn);
+    actionsEl.appendChild(exportGLBBtn);
   }
 
   // --- State Listeners ---

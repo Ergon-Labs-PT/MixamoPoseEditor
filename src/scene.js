@@ -29,6 +29,12 @@ export function createScene(container) {
   dirLight.castShadow = true;
   scene.add(dirLight);
 
+  // Camera-attached fill light
+  const cameraLight = new THREE.DirectionalLight(0xffffff, 0.3);
+  camera.add(cameraLight);
+  cameraLight.position.set(0, 0, 1);
+  scene.add(camera);
+
   const hemiLight = new THREE.HemisphereLight(0x8888ff, 0x443322, 0.4);
   scene.add(hemiLight);
 
@@ -53,5 +59,5 @@ export function createScene(container) {
   };
   window.addEventListener('resize', onResize);
 
-  return { scene, camera, renderer, orbitControls };
+  return { scene, camera, renderer, orbitControls, lights: { ambientLight, dirLight, cameraLight, hemiLight } };
 }

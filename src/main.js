@@ -1,5 +1,6 @@
+import * as THREE from 'three';
 import { createScene } from './scene.js';
-import { loadModel } from './modelLoader.js';
+import { loadModel, exportModelGLB } from './modelLoader.js';
 import { createJointMarkers } from './jointMarkers.js';
 import { createBoneControls } from './boneControls.js';
 import { createUI } from './ui.js';
@@ -10,7 +11,7 @@ async function init() {
   const viewport = document.getElementById('viewport');
 
   // Scene setup
-  const { scene, camera, renderer, orbitControls } = createScene(viewport);
+  const { scene, camera, renderer, orbitControls, lights } = createScene(viewport);
 
   // Joint markers (listens for modelLoaded)
   const jointMarkers = createJointMarkers(scene, state);
@@ -19,8 +20,8 @@ async function init() {
   createBoneControls(camera, renderer, scene, orbitControls, jointMarkers, state);
 
   // Load model helper
-  const loadModelFromBuffer = (arrayBuffer) => {
-    loadModel(arrayBuffer, scene, state).catch(err => {
+  const loadModelFromBuffer = (arrayBuffer, fileType = 'fbx') => {
+    loadModel(arrayBuffer, scene, state, fileType).catch(err => {
       console.error('Failed to load model:', err);
     });
   };
@@ -35,7 +36,7 @@ async function init() {
     if (!viewport.querySelector('.drop-overlay')) {
       const overlay = document.createElement('div');
       overlay.className = 'drop-overlay';
-      overlay.textContent = 'Drop FBX file here';
+      overlay.textContent = 'Drop FBX/GLB file here';
       viewport.appendChild(overlay);
     }
   });
@@ -52,10 +53,13 @@ async function init() {
     if (overlay) overlay.remove();
 
     const file = e.dataTransfer.files[0];
-    if (file && file.name.toLowerCase().endsWith('.fbx')) {
-      const reader = new FileReader();
-      reader.onload = (evt) => loadModelFromBuffer(evt.target.result);
-      reader.readAsArrayBuffer(file);
+    if (file) {
+      const ext = file.name.toLowerCase().split('.').pop();
+      if (['fbx', 'glb', 'gltf'].includes(ext)) {
+        const reader = new FileReader();
+        reader.onload = (evt) => loadModelFromBuffer(evt.target.result, ext);
+        reader.readAsArrayBuffer(file);
+      }
     }
   });
 
@@ -68,6 +72,10 @@ async function init() {
       state.skeletonHelper.visible = visible;
     }
   });
+
+  // Remove unused light slider for now
+  const lightSliderContainer = document.querySelector('.light-slider');
+  if (lightSliderContainer) lightSliderContainer.style.display = 'none';
 
   // Keep skeleton helper visibility in sync when a new model loads
   state.on('modelLoaded', () => {

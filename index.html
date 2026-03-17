@@ -12,11 +12,15 @@
     <div id="side-panel">
       <div id="panel-header">
         <h1>Pose Editor</h1>
-        <button id="load-fbx-btn">Load FBX</button>
-        <input type="file" id="fbx-file-input" accept=".fbx" hidden>
+        <button id="load-fbx-btn">Load Model</button>
+        <input type="file" id="fbx-file-input" accept=".fbx,.glb,.gltf" hidden>
       </div>
       <div id="view-options">
         <label><input type="checkbox" id="toggle-helpers" checked> Show markers &amp; skeleton</label>
+        <div class="light-slider">
+          <label>Exposure: <span id="light-value">0.8</span></label>
+          <input type="range" id="light-intensity" min="20" max="200" value="80" step="5">
+        </div>
       </div>
       <div id="bone-tree"></div>
       <div id="bone-controls"></div>

@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
-export function loadModel(source, scene, state) {
+export function loadModel(source, scene, state, fileType = 'fbx') {
   return new Promise((resolve, reject) => {
-    const loader = new FBXLoader();
-
     const onLoad = (object) => {
       // Remove previous model if any
       if (state.model) {
@@ -14,16 +14,38 @@ export function loadModel(source, scene, state) {
         }
       }
 
-      // Scale from cm to meters
-      object.scale.setScalar(0.01);
+      // Scale from cm to meters (FBX uses cm, GLTF uses meters)
+      if (fileType === 'fbx') {
+        object.scale.setScalar(0.01);
+      }
 
-      // Find skinned mesh and skeleton
+      // Find skinned mesh and skeleton, fix FBX material issues
       let skinnedMesh = null;
       object.traverse((child) => {
-        if (child.isSkinnedMesh) {
-          skinnedMesh = child;
+        if (child.isMesh || child.isSkinnedMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
+
+          // Remove vertex colors that override diffuse textures
+          if (child.geometry.attributes.color) {
+            child.geometry.deleteAttribute('color');
+          }
+
+          // Convert to unlit material — shows texture exactly as-is
+          const materials = Array.isArray(child.material) ? child.material : [child.material];
+          const newMaterials = materials.map(mat => {
+            if (!mat) return mat;
+            const basic = new THREE.MeshBasicMaterial();
+            if (mat.map) basic.map = mat.map;
+            if (mat.color) basic.color = mat.color;
+            basic.skinning = true;
+            return basic;
+          });
+          child.material = newMaterials.length === 1 ? newMaterials[0] : newMaterials;
+
+          if (child.isSkinnedMesh) {
+            skinnedMesh = child;
+          }
         }
       });
 
@@ -60,17 +82,62 @@ export function loadModel(source, scene, state) {
       // Force world matrix update so bone positions are correct immediately
       object.updateMatrixWorld(true);
 
+      // Check if the model is centered and on the ground
+      const box = new THREE.Box3().setFromObject(object);
+      const center = box.getCenter(new THREE.Vector3());
+      const minY = box.min.y;
+      const threshold = 0.01; // 1cm tolerance
+
+      const offCenterX = Math.abs(center.x) > threshold;
+      const offCenterZ = Math.abs(center.z) > threshold;
+      const offGround = Math.abs(minY) > threshold;
+
+      if (offCenterX || offCenterZ || offGround) {
+        const issues = [];
+        if (offCenterX || offCenterZ) issues.push('not centered');
+        if (offGround) issues.push(`${Math.abs(minY).toFixed(2)}m ${minY > 0 ? 'above' : 'below'} ground`);
+
+        if (confirm(`Model is ${issues.join(' and ')}. Fix position?`)) {
+          if (offCenterX) object.position.x -= center.x;
+          if (offCenterZ) object.position.z -= center.z;
+          if (offGround) object.position.y -= minY;
+          object.updateMatrixWorld(true);
+        }
+      }
+
       state.setModel(object, bones, skeletonHelper);
 
       resolve({ model: object, skeleton, bones, skeletonHelper });
     };
 
-    if (typeof source === 'string') {
-      loader.load(source, onLoad, undefined, reject);
+    if (fileType === 'glb' || fileType === 'gltf') {
+      const loader = new GLTFLoader();
+      if (typeof source === 'string') {
+        loader.load(source, (gltf) => onLoad(gltf.scene), undefined, reject);
+      } else {
+        loader.parse(source, '', (gltf) => onLoad(gltf.scene), reject);
+      }
     } else {
-      // source is an ArrayBuffer from FileReader
-      const object = loader.parse(source, '');
-      onLoad(object);
+      const loader = new FBXLoader();
+      if (typeof source === 'string') {
+        loader.load(source, onLoad, undefined, reject);
+      } else {
+        const object = loader.parse(source, '');
+        onLoad(object);
+      }
     }
+  });
+}
+
+export function exportModelGLB(model) {
+  const exporter = new GLTFExporter();
+  return exporter.parseAsync(model, { binary: true }).then((glb) => {
+    const blob = new Blob([glb], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `model-${Date.now()}.glb`;
+    a.click();
+    URL.revokeObjectURL(url);
   });
 }
