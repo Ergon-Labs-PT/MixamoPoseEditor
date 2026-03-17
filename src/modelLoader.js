@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 export function loadModel(source, scene, state, fileType = 'fbx') {
   return new Promise((resolve, reject) => {
@@ -112,6 +113,7 @@ export function loadModel(source, scene, state, fileType = 'fbx') {
 
     if (fileType === 'glb' || fileType === 'gltf') {
       const loader = new GLTFLoader();
+      loader.setMeshoptDecoder(MeshoptDecoder);
       if (typeof source === 'string') {
         loader.load(source, (gltf) => onLoad(gltf.scene), undefined, reject);
       } else {
